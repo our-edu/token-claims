@@ -16,7 +16,10 @@
     "autoload": {
         "psr-4": {
             "OurEdu\\TokenClaims\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -27,7 +30,10 @@
         "laravel": {
             "providers": [
                 "OurEdu\\TokenClaims\\TokenClaimsServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "TokenClaims": "OurEdu\\TokenClaims\\Facades\\TokenClaims"
+            }
         }
     },
     "config": {

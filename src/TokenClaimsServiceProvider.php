@@ -6,6 +6,7 @@ namespace OurEdu\TokenClaims;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use OurEdu\TokenClaims\Middleware\PermissionMiddleware;
 use OurEdu\TokenClaims\Middleware\RoleMiddleware;
 
 class TokenClaimsServiceProvider extends ServiceProvider
@@ -16,14 +17,17 @@ class TokenClaimsServiceProvider extends ServiceProvider
 
         // Scoped: one resolver, and so one IAM call, per request (Octane safe)
         $this->app->scoped(TokenClaimsResolver::class);
+        $this->app->scoped(PermissionAuthorizer::class);
     }
 
     public function boot(): void
     {
         $this->loadTranslationsFrom(__DIR__ . '/../lang', 'token-claims');
 
-        // A service whose HTTP Kernel still maps 'role' to its own class overrides this
-        $this->app->make(Router::class)->aliasMiddleware('role', RoleMiddleware::class);
+        // A service whose HTTP Kernel still maps these to its own classes overrides them
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('role', RoleMiddleware::class);
+        $router->aliasMiddleware('permission', PermissionMiddleware::class);
 
         if ($this->app->runningInConsole()) {
             $this->publishes([

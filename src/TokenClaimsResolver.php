@@ -18,7 +18,7 @@ class TokenClaimsResolver
 
     private ?TokenClaims $claims = null;
 
-    private ?ClaimsFailure $failure = null;
+    protected ?ClaimsFailure $failure = null;
 
     /**
      * The claims, or null when they could not be resolved (see failure()).
@@ -67,7 +67,22 @@ class TokenClaimsResolver
             : ErrorResponse::invalidSession();
     }
 
-    private function fetch(): ?TokenClaims
+    /**
+     * The claims, or null when the request carries no token (jobs, commands,
+     * public routes). Any other failure stops the request with 401 / 503.
+     *
+     * @throws HttpResponseException
+     */
+    public function optionalClaims(): ?TokenClaims
+    {
+        if ($this->failure() === ClaimsFailure::MissingToken) {
+            return null;
+        }
+
+        return $this->requireClaims();
+    }
+
+    protected function fetch(): ?TokenClaims
     {
         $token = request()->bearerToken();
         if (!$token) {
@@ -75,11 +90,11 @@ class TokenClaimsResolver
             return null;
         }
 
-        $url = $this->url();
+        $url = Iam::url('token/claims');
 
         try {
             $response = Http::withToken($token)
-                ->timeout((int) config('token-claims.timeout', 10))
+                ->timeout(Iam::timeout())
                 ->get($url);
         } catch (\Exception $e) {
             Log::error('Failed to fetch token claims from IAM service', [
@@ -117,14 +132,5 @@ class TokenClaimsResolver
         }
 
         return new TokenClaims($data);
-    }
-
-    private function url(): string
-    {
-        $base = config('token-claims.iam_url')
-            ?? config('app.iam_service_url')
-            ?? 'http://saas-iam-service:9000/api/v1';
-
-        return rtrim((string) $base, '/') . '/token/claims';
     }
 }
