@@ -22,12 +22,16 @@ jobs:
             laravel: '11.*'
             testbench: '9.*'
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    env:
+      # Every Laravel 9-11 release has open advisories; testing the supported range needs them installable
+      COMPOSER_NO_SECURITY_BLOCKING: 1
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+      - run: composer config policy.advisories.block false || composer config audit.block-insecure false
       - run: composer require "illuminate/http:${{ matrix.laravel }}" "illuminate/support:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
       - run: composer update --prefer-dist --no-interaction --with-all-dependencies
       - run: vendor/bin/phpunit
