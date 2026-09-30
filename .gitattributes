@@ -8,3 +8,4 @@
 /composer.lock export-ignore
 /.phpunit.result.cache export-ignore
 /.phpunit.cache export-ignore
+/.github export-ignore
